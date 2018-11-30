@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="webservice" default="upload" basedir=".">
+<!--properities-->
+<property name="src.dir" value="src"/>
+<property name="report.dir" value="report" />
+<property name="classes.dir" value="classes" />
+<property name="lib.dir" value="lib"/>
+<property name="dest.dir" value="dest" />
+<property name="export.jar" value="af-batchTask.jar"/>
+
+<property name="remote.username" value="bpf" />
+<property name="remote.password" value="bpf" />
+<property name="remote.host" value="172.16.7.125" />
+<property name="remote.home" value="/home/bpf/lib" />
+
+<!-- 每次都要找主类 -->
+<property name="main.class" value="test.Test1"></property>
+	
+<!-- 基本的编译路径设置 -->
+<path id="compile.classpath">
+	<fileset dir="${lib.dir}">
+		<include name="*.jar" />
+	</fileset>
+</path>
+<!-- 运行路径设置 -->
+<path id="run.classpath">
+	<path refid="compile.classpath" />
+	<pathelement location="${classes.dir}"></pathelement>
+</path>
+
+<target name="clean" >
+   <delete dir="${test.dir}" />
+</target>
+<!--初始化任务-->
+<target name="init">
+<mkdir dir="${dest.dir}"/>
+<mkdir dir="${lib.dir}"/>
+</target>
+	
+		
+<!--编译-->
+<target name="compile" depends="init" description="compile the source files">
+	<mkdir dir="${classes.dir}"/>
+    <javac srcdir="${src.dir}" destdir="${classes.dir}" includeAntRuntime="false" >
+		<compilerarg line="-encoding UTF-8" />
+		<classpath refid="run.classpath"/>
+    </javac>
+</target>
+<!--测试-->
+<!-- target name="test" depends="compile" description="run junit test">
+<mkdir dir="${report.dir}"/>
+</target -->
+<!--打包成jar-->
+<target name="build" depends="compile">
+	<jar jarfile="${dest.dir}/${export.jar}" basedir="${classes.dir}">
+	</jar>
+    <echo message="打包完毕" />
+</target>
+	 <!-- 通过FTP上传打包的EAR文件. -->  
+	<target name="ftpUpload" depends="build" description="Upload TestWebEAR.ear to server">  
+	    <ftp server="172.16.7.125" action="put" passive="true" remotedir="~" userid="bpf" password="bpf"   
+	        separator="\" verbose="yes" binary="yes">  
+	        <fileset dir="${dest.dir}">  
+	            <include name="**/*.*" />  
+	        </fileset>      	
+	    </ftp>  
+		<echo message="上传完毕" />
+	</target> 
+	
+<!-- 上传服务器（需要将lib目录下的jsch-0.1.51.jar文件拷贝到$ANT_HOME/lib下，如果是Eclipse下的Ant环境必须在Window->Preferences->Ant->Runtime->Classpath中加入jsch-0.1.51. -->
+<target name="upload" depends="build" description="upload the file to remote server">
+	<scp file="${dest.dir}/${export.jar}" todir="${remote.username}@${remote.host}:${remote.home}" 
+		password="${remote.password}" trust="true" verbose="false"/>
+	<!--  <scp file="${dest.dir}/test1.jar" todir="${remote.username}:${remote.password}@${remote.host}:${remote.home}" trust="true" verbose="true"/>-->
+    <echo message="上传完毕" />
+</target>
+	
+
+<!-- 
+<target name="sshexec" depends="upload">
+	<sshexec host="${remote.host}" username="${remote.username}" password="${remote.password}" trust="true" commond="source /etc/profile; sudo -u root hadoop jar ${remote.home}/${export.jar} ${main.class}"
+</target> 
+<target name="run" depends="build">
+   <java classname="${main.class}" classpath="${dest.dir}/${export.jar}"/>
+</target>
+<target name="rerun" depends="clean,run">
+   <ant target="clean" />
+   <ant target="run" />
+</target-->
+</project>

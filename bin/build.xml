@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. -->
+<project basedir="." default="upload" name="af-batchTask">
+  	<!--properities-->
+  	<property name="export.jar" value="af-batchTask.jar"/>
+	<property name="src.dir" value="src"/>
+	<property name="classes.dir" value="bin" />
+	<property name="dest.dir" value="dest" />
+	<property name="export.jar" value="af-batchTask.jar"/>
+	
+  	<property name="remote.username" value="bpf" />
+  	<property name="remote.password" value="bpf" />
+  	<property name="remote.host" value="172.16.7.125" />
+  	<property name="remote.home" value="/home/bpf" />
+
+	<target name="clean">
+		<delete dir="${dest.dir}"></delete>
+	</target>
+	<!--打包成jar-->
+	<target name="build" depends="clean">
+		<mkdir dir="${dest.dir}"/>
+		<jar jarfile="${dest.dir}/${export.jar}" basedir="${classes.dir}">
+		</jar>
+	    <echo message="打包完毕" />
+	</target>
+	
+	 <!-- 通过FTP上传打包的EAR文件. -->  
+	<target name="ftpUpload" depends="build" description="Upload TestWebEAR.ear to server">  
+	    <ftp server="172.16.7.125" action="put" passive="true" remotedir="~" userid="bpf" password="bpf"   
+	        separator="\" verbose="yes" binary="yes">  
+	        <fileset dir="${dest.dir}">  
+	            <include name="**/*.*" />  
+	        </fileset>      	
+	    </ftp>  
+		<echo message="ftp上传完毕" />
+	</target> 
+	
+<!-- 上传服务器（需要将lib目录下的jsch-0.1.51.jar文件拷贝到$ANT_HOME/lib下，如果是Eclipse下的Ant环境必须在Window->Preferences->Ant->Runtime->Classpath中加入jsch-0.1.51. -->
+<target name="upload" depends="build" description="upload the file to remote server">
+	<scp file="${dest.dir}/${export.jar}" todir="${remote.username}@${remote.host}:${remote.home}" 
+		password="${remote.password}" trust="true" verbose="false"/>
+	<!--  <scp file="${dest.dir}/${export.jar}.jar" todir="${remote.username}:${remote.password}@${remote.host}:${remote.home}" trust="true" verbose="true"/>-->
+   <echo message="scp上传完毕" />
+</target>
+	
+</project>
